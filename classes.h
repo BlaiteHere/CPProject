@@ -46,6 +46,9 @@ struct Axis{
     void print(){
         cout << "[x: " << x << ", y: " << y << "]";
     }
+    Axis getCoords(){
+        return Axis(x, y);
+    }
 };
 
 struct Tile{
@@ -72,15 +75,70 @@ struct Tile{
 struct Item{
     string name;    //item name
     char texture;   //basic item appearance
-    int canBreak;   //what can item break
+    string desc;    //item description
     Item(){
-        name="Unknown", texture='E', canBreak=0;
+        name="Unknown", texture='E', 
+        desc="This is a default item. Enjoy!";
     }
-    Item(string item_name, char item_txt, int item_destroy){
-        name=item_name, texture=item_txt, canBreak=item_destroy;
+    Item(string item_name, char item_txt, string description){
+        name=item_name, texture=item_txt, desc=description;
     }
-    void use(){
-        cout << "";        //IMPLEMENT THIS!
+    virtual void description(){
+        cout << desc;
+    }
+    virtual void use(){
+        description();      //IMPLEMENT THIS!
+    }
+};
+
+struct Consumable: Item{
+    string name;    //item name
+    char texture;   //basic item appearance
+    int heal;       //amount of healing
+    string desc;
+    Consumable(){
+        name="Goo", texture='E', heal=-1,
+        desc="Gross!";
+    }
+    Consumable(string item_name, char item_txt, int item_heal,
+    string description){
+        name=item_name, texture=item_txt, heal=item_heal,
+        desc=description;
+    }
+    void description(){
+        cout << desc;
+    }
+    void use(int &health){
+        cout << "You used the" << name << " and ";
+        if(heal>0) cout << "it healed you " << heal << "HP.";
+        else{
+            if(heal<0) cout << "you lost " << heal << " of HP.";
+            if(heal>0) cout << "it did nothing. It was a good shot though.";
+        }
+        health=-heal;
+    };
+};
+
+struct Tool: Item{
+    string name;    //item name
+    char texture;   //basic item appearance
+    Tile* canBreak; //what can item break
+    string desc;    //item description
+    Tool(){
+        name="Broken tool", texture='E', canBreak=NULL,
+        desc="Looks very broken. And useless.";
+    }
+    Tool(string item_name, char item_txt, Tile* item_destroy,
+    string description){
+        name=item_name, texture=item_txt, canBreak=item_destroy,
+        desc=description;
+    }
+    void description(){
+        cout << desc;
+    }
+    void use(Directions looking_at, Axis where_its){
+        bool one=looking_at.one, two=looking_at.two;
+
     }
 };
 
@@ -115,6 +173,7 @@ struct Inventory{
     void use(int index){    //"uses" item
         if(array_types[index]!=NULL){
             cout << "You used " << array_types[index]->name << ".\n";
+            array_types[index]->use();
             array_quantity[index]--;
             if(array_quantity[index]<0) {
                 array_types[index]=NULL;
@@ -144,14 +203,16 @@ struct Entity: Tile{
     string name;
     Axis coords;
     Stats statistics;
-    Inventory inv;
     Directions direction;
-    Item* hand;
+    Item* hand=NULL;
     Entity(){
-        name="Dynamik", solid=true, texture=name[0], coords.x=0, coords.y=0;
+        name="Entity", solid=true, texture=name[0], coords.x=0, coords.y=0;
     }
-    Entity(string tile_name, char tile_txt, bool tile_solid=true, int x=1, int y=1){
-        name=tile_name, texture=tile_txt, solid=tile_solid, coords.x=x, coords.y=y;
+    Entity(string tile_name, char tile_txt, int hp, int ap, 
+    int x=0, int y=0, bool tile_solid=true){
+        name=tile_name, texture=tile_txt, solid=tile_solid,
+        coords.x=x, coords.y=y, statistics.attack=ap,
+        statistics.health=hp;
     }
     bool isSolid(){
         return solid;
@@ -162,4 +223,92 @@ struct Entity: Tile{
     string getName(){
         return name;
     };
+    virtual void moveEntity(){
+        cout << ">>> " << name << " as been moved!\n";
+    }
+};
+
+struct Player: Entity{
+    bool solid;
+    char texture;
+    string name;
+    Axis coords;
+    Stats statistics;
+    Inventory inv;
+    Directions direction;
+    Item* hand=NULL;
+    Player(){
+        name="player", solid=true, texture=name[0], coords.x=0, coords.y=0;
+    }
+    Player(string tile_name, char tile_txt, int hp, int ap, 
+    int x=0, int y=0, bool tile_solid=true, bool starterpack=false){
+        name=tile_name, texture=tile_txt, solid=tile_solid,
+        coords.x=x, coords.y=y, statistics.attack=ap,
+        statistics.health=hp;
+        if(starterpack) cout << ">>> " << name << " HAS ACTIVATED STARTER PACK ON!"; //inv.append();
+        else;
+    }
+    bool isSolid(){
+        return solid;
+    };
+    char getTxt(){
+        return texture;
+    };
+    string getName(){
+        return name;
+    };
+    void moveEntity(){      //got bored optimising, time to deoptimise :>
+        if(direction.get_dir()=="UP") coords.y--; else{
+            if(direction.get_dir()=="DOWN") coords.y++; else{
+                if(direction.get_dir()=="LEFT") coords.x--; else{
+                    if(direction.get_dir()=="RIGHT") coords.x++;
+                    else cout << "what.\n";
+                }
+            }
+        }
+    }
+};
+
+struct Monster: Entity{
+    bool solid;
+    char texture;
+    int stage, ai;
+    string name;
+    Axis coords;
+    Stats statistics;
+    Directions direction;
+    Item* hand=NULL;
+    Monster(){
+        name="Monster", solid=true, texture=name[0], coords.x=0, coords.y=0,
+        ai=0;
+    }
+    Monster(string tile_name, char tile_txt, int hp, int ap, 
+    int ai=0, int x=0, int y=0, bool tile_solid=true){
+        name=tile_name, texture=tile_txt, solid=tile_solid,
+        coords.x=x, coords.y=y, statistics.attack=ap,
+        statistics.health=hp, this->ai=ai;
+    }
+    bool isSolid(){
+        return solid;
+    };
+    char getTxt(){
+        return texture;
+    };
+    string getName(){
+        return name;
+    };
+    virtual void moveEntity(){
+        switch(ai){
+            case 1:     //zombie
+                if(stage<2);
+                else{;}
+                if(stage>7) stage=0;
+                else stage++;
+                break;
+            case 2:     //lazy ghost
+                if(stage==0){solid=true; stage++;}
+                else{solid=false; stage=0;}
+                break;
+        }
+    }
 };

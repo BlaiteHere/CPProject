@@ -1,6 +1,5 @@
-//By BlaiteHere#8818 DC: https://discord.gg/CcHYxcSctv
+/*By BlaiteHere#8818 DC: https://discord.gg/CcHYxcSctv
 
-/*
     TO-DO:
      - CHESTS
      - MORE AI
@@ -10,9 +9,7 @@
      > CHEST ENTITY & DYNAMIC AND 
        'STATIC ARRAYS' (EASY)
 */
-
 #include <iostream>
-#include <fstream>
 using namespace std;
 //----------------------------------------------------
 struct Directions{  //boolean direction (00=up, 01=right, 10=down, 11=left)
