@@ -1,3 +1,4 @@
+//By BlaiteHere#8818 DC: https://discord.gg/CcHYxcSctv
 #include "functions.h"
 using namespace std;
 
@@ -12,7 +13,7 @@ int input_maze[s][s]={
 };
 Tile* static_maze[s][s];
 Tile* dynamic_maze[s][s];
-Tile* entity_list[es]={e[1]};
+Tile* entity_list[es]={e[0], e[1]};
 
 int main(){
     delete(blaite);
